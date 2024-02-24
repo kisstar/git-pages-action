@@ -7,6 +7,9 @@ branding:
   color: 'orange'
 
 inputs:
+  ssh_private_key:
+    description: 'A private SSH key without a passphrase.'
+    required: true
   # git-config-name:
   #   description: 'Allows you to customize the name of the git user.'
   #   required: false
@@ -36,14 +39,16 @@ runs:
         echo "$GIT_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan ${GIT_SSH_KNOWN_HOSTS} >> ~/.ssh/known_hosts
+      shell: bash
       env:
         GIT_SSH_KNOWN_HOSTS: ${{ inputs.git-hosts }}
-        GIT_SSH_PRIVATE_KEY: ${{ secrets.ssh_private_key }}
+        GIT_SSH_PRIVATE_KEY: ${{ inputs.ssh_private_key }}
 
     - name: Use gh-pages to Deploy
       run: |
         git remote add origin git@${GIT_SSH_KNOWN_HOSTS}:${GIT_REPOSITORY}.git
         npx gh-pages -d ${GIT_FOLDER} -b ${GIT_BRANCH}
+      shell: bash
       env:
         GIT_SSH_KNOWN_HOSTS: ${{ inputs.git-hosts }}
         GIT_REPOSITORY: ${{ inputs.repository-name }}
@@ -51,10 +56,11 @@ runs:
         GIT_FOLDER: ${{ inputs.folder }}
 
     - name: Remove SSH key
+      shell: bash
       run: |
         git remote remove origin
         rm -rf ~/.ssh
 
 outputs:
   deployment-status:
-    description: 'The status of the deployment that indicates if the run failed or passed. 
+    description: 'The status of the deployment that indicates if the run failed or passed.'
