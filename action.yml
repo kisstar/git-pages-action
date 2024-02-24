@@ -46,7 +46,7 @@ runs:
 
     - name: Use gh-pages to Deploy
       run: |
-        git remote add origin git@${GIT_SSH_KNOWN_HOSTS}:${GIT_REPOSITORY}.git
+        git remote set-url origin git@${GIT_SSH_KNOWN_HOSTS}:${GIT_REPOSITORY}.git
         npx gh-pages -d ${GIT_FOLDER} -b ${GIT_BRANCH}
       shell: bash
       env:
