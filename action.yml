@@ -1,0 +1,60 @@
+# see: https://docs.github.com/en/actions/creating-actions/about-custom-actions
+name: 'GitHub Action for static pages'
+description: 'This action will handle the deployment process of your project.'
+author: 'Kisstar <dwh.chn@foxmail.com>'
+branding:
+  icon: 'git-pull-request'
+  color: 'orange'
+
+inputs:
+  # git-config-name:
+  #   description: 'Allows you to customize the name of the git user.'
+  #   required: false
+  # git-config-email:
+  #   description: 'Allows you to customize the email of the git user.'
+  #   required: false
+  git-hosts:
+    description: 'This is the branch you wish to deploy to.'
+    required: true
+  repository-name:
+    description: 'Allows you to specify a different repository path so long as you have permissions to push to it.'
+    required: true
+  branch:
+    description: 'This is the branch you wish to deploy to.'
+    required: false
+    default: gh-pages
+  folder:
+    description: 'The folder in your repository that you want to deploy.'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set SSH key
+      run: |
+        mkdir -p ~/.ssh/
+        echo "$GIT_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan ${GIT_SSH_KNOWN_HOSTS} >> ~/.ssh/known_hosts
+      env:
+        GIT_SSH_KNOWN_HOSTS: ${{ inputs.git-hosts }}
+        GIT_SSH_PRIVATE_KEY: ${{ secrets.ssh_private_key }}
+
+    - name: Use gh-pages to Deploy
+      run: |
+        git remote add origin git@${GIT_SSH_KNOWN_HOSTS}:${GIT_REPOSITORY}.git
+        npx gh-pages -d ${GIT_FOLDER} -b ${GIT_BRANCH}
+      env:
+        GIT_SSH_KNOWN_HOSTS: ${{ inputs.git-hosts }}
+        GIT_REPOSITORY: ${{ inputs.repository-name }}
+        GIT_BRANCH: ${{ inputs.branch }}
+        GIT_FOLDER: ${{ inputs.folder }}
+
+    - name: Remove SSH key
+      run: |
+        git remote remove origin
+        rm -rf ~/.ssh
+
+outputs:
+  deployment-status:
+    description: 'The status of the deployment that indicates if the run failed or passed. 
